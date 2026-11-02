@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	cgg_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_cgg = sync.OnceFunc(func() {
 	cgg_Locale = merge(nil, LocaleData{
 		Name:      "cgg",
 		DateOrder: "DMY",
@@ -60,6 +66,7 @@ func init() {
 			"san":                {"sunday"},
 			"utc":                {"utc"},
 			"am":                 {"am"},
+			"hr":                 {"hour"},
 			"pm":                 {"pm"},
 			" ":                  {" "},
 			"'":                  {""},
@@ -93,6 +100,6 @@ func init() {
 			"erizooba":    "0 day ago",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"okwaikumi na ibiri", "okwaikumi na kumwe", "obucweka/esekendi", "okwamushanju", "nyenkyakare", "nyomwabazyo", "okwakashatu", "okwakataana", "okwamukaaga", "okwamunaana", "okwokubanza", "orwakashatu", "orwakataano", "orwamukaaga", "orwokubanza", "this minute", "last month", "next month", "okwakabiri", "okwamwenda", "orwakabiri", "this month", "last week", "last year", "next week", "next year", "okwaikumi", "this hour", "this week", "this year", "edakiika", "erizooba", "okwakana", "orwakana", "eizooba", "esande", "omwaka", "omwezi", "shaaha", "sande", "gmt", "kbr", "kbz", "kkm", "kkn", "kmk", "kmn", "kms", "kmw", "knb", "knk", "kst", "ktn", "now", "okb", "okn", "oks", "okt", "omk", "ork", "san", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"okwaikumi na ibiri", "okwaikumi na kumwe", "obucweka/esekendi", "okwamushanju", "nyenkyakare", "nyomwabazyo", "okwakashatu", "okwakataana", "okwamukaaga", "okwamunaana", "okwokubanza", "orwakashatu", "orwakataano", "orwamukaaga", "orwokubanza", "this minute", "last month", "next month", "okwakabiri", "okwamwenda", "orwakabiri", "this month", "last week", "last year", "next week", "next year", "okwaikumi", "this hour", "this week", "this year", "edakiika", "erizooba", "okwakana", "orwakana", "eizooba", "esande", "omwaka", "omwezi", "shaaha", "sande", "gmt", "kbr", "kbz", "kkm", "kkn", "kmk", "kmn", "kms", "kmw", "knb", "knk", "kst", "ktn", "now", "okb", "okn", "oks", "okt", "omk", "ork", "san", "utc", "am", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

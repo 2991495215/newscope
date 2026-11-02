@@ -21,42 +21,61 @@ import (
 	"bytes"
 	"regexp"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/go-shiori/dom"
+	dateutilparser "github.com/markusmobius/go-dateutil/v2/parser"
 	"golang.org/x/net/html"
 )
 
+var (
+	rxDoctypeRepair = regexp.MustCompile(`(?i)^< ?! ?DOCTYPE.+?/ ?>`)
+	rxHTMLRepair    = regexp.MustCompile(`(?i)(<html.*?)\s*/>`)
+)
+
+func repairHTML(content string) string {
+	beginning := strings.ToLower(strLimit(content, 50))
+	if strings.Contains(beginning, "doctype") {
+		first, rest, _ := strings.Cut(content, "\n")
+		content = rxDoctypeRepair.ReplaceAllString(first, "") + "\n" + rest
+	}
+	for index, line := range strings.Split(content, "\n") {
+		if strings.Contains(line, "<html") && strings.HasSuffix(line, "/>") {
+			if match := rxHTMLRepair.FindStringSubmatchIndex(content); len(match) > 0 {
+				content = content[:match[0]] + content[match[2]:match[3]] + ">" + content[match[1]:]
+			}
+			break
+		}
+		if index > 2 {
+			break
+		}
+	}
+	return content
+}
+
 // cleanDocument cleans the document by discarding unwanted elements.
 func cleanDocument(doc *html.Node) *html.Node {
-	// Clone doc
-	clone := dom.Clone(doc, true)
-
 	// Remove comments
-	// removeHtmlCommentNode(clone)
+	// removeHtmlCommentNode(doc)
 
 	// Remove useless nodes
-	tagNames := []string{
-		// Embed elements
-		"object", "embed", "applet",
-		// Frame elements
-		"frame", "frameset", "noframes", "iframe",
-		// Others
-		"label", "map", "math",
-		"audio", "canvas", "datalist",
-		"picture", "rdf", "svg", "track", "video",
-		// TODO: to be considered
-		// "figure", "input", "layer", "param", "source"
-	}
-
-	for _, node := range dom.GetAllNodesWithTag(clone, tagNames...) {
-		if node.Parent != nil {
+	for _, node := range dom.GetElementsByTagName(doc, "*") {
+		if isCleanedTag(node.Data) && node.Parent != nil {
 			node.Parent.RemoveChild(node)
 		}
 	}
 
-	return clone
+	return doc
+}
+
+func isCleanedTag(tag string) bool {
+	switch tag {
+	case "object", "embed", "applet", "frame", "frameset", "noframes", "iframe",
+		"label", "map", "math", "audio", "canvas", "datalist", "picture", "rdf",
+		"svg", "track", "video":
+		return true
+	}
+	return false
 }
 
 // removeHtmlCommentNode removes all `html.CommentNode` in document.
@@ -85,20 +104,14 @@ func removeHtmlCommentNode(doc *html.Node) {
 
 // isDigit check if string only consisted of digit number.
 func isDigit(s string) bool {
-	for _, r := range s {
-		if !unicode.IsDigit(r) {
-			return false
-		}
-	}
-
-	return true
+	return dateutilparser.IsDigits(s)
 }
 
 // getDigitCount returns count of digit number in the specified string.
 func getDigitCount(s string) int {
 	var nDigit int
 	for _, r := range s {
-		if unicode.IsDigit(r) {
+		if dateutilparser.IsDigit(r) {
 			nDigit++
 		}
 	}
@@ -142,8 +155,7 @@ func strLimit(s string, limit int) string {
 // normalizeSpaces converts all whitespaces to normal spaces, remove multiple adjacent
 // whitespaces and trim the string.
 func normalizeSpaces(s string) string {
-	s = strings.Join(strings.Fields(s), " ")
-	return strings.TrimSpace(s)
+	return strings.Join(strings.FieldsFunc(s, dateutilparser.IsSpace), " ")
 }
 
 func rxFindNamedStringSubmatch(rx *regexp.Regexp, s string) (map[string]string, string) {

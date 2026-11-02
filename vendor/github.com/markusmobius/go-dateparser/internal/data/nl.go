@@ -2,7 +2,11 @@
 
 package data
 
-import "github.com/markusmobius/go-dateparser/internal/regexp"
+import (
+	"sync"
+
+	"github.com/markusmobius/go-dateparser/internal/regexp"
+)
 
 var (
 	nl_Locale    LocaleData
@@ -14,7 +18,9 @@ var (
 	nl_SX_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_nl = sync.OnceFunc(func() {
 	nl_Locale = merge(nil, LocaleData{
 		Name:                  "nl",
 		DateOrder:             "DMY",
@@ -95,6 +101,7 @@ func init() {
 			"[":         {""},
 			"]":         {""},
 			"s":         {"second"},
+			"u":         {"hour"},
 			"z":         {"z"},
 			"|":         {""},
 		},
@@ -150,9 +157,10 @@ func init() {
 			{regexp.MustCompile(`(?i)over (\d+[.,]?\d*) sec`), "in $1 second"},
 			{regexp.MustCompile(`(?i)over (\d+[.,]?\d*) uur`), "in $1 hour"},
 		},
-		RxCombined:      regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(\d+[.,]?\d* seconden geleden|\d+[.,]?\d* maanden geleden|\d+[.,]?\d* minuten geleden|\d+[.,]?\d* seconde geleden|\d+[.,]?\d* minuut geleden|\d+[.,]?\d* dagen geleden|\d+[.,]?\d* maand geleden|\d+[.,]?\d* weken geleden|over \d+[.,]?\d* seconden|\d+[.,]?\d* jaar geleden|\d+[.,]?\d* week geleden|over \d+[.,]?\d* maanden|over \d+[.,]?\d* minuten|over \d+[.,]?\d* seconde|\d+[.,]?\d* dag geleden|\d+[.,]?\d* dgn geleden|\d+[.,]?\d* min geleden|\d+[.,]?\d* sec geleden|\d+[.,]?\d* uur geleden|over \d+[.,]?\d* minuut|over \d+[.,]?\d* dagen|over \d+[.,]?\d* maand|over \d+[.,]?\d* weken|over \d+[.,]?\d* jaar|over \d+[.,]?\d* week|over \d+[.,]?\d* dag|over \d+[.,]?\d* dgn|over \d+[.,]?\d* min|over \d+[.,]?\d* sec|over \d+[.,]?\d* uur)(\z|[^\pL\pM\d]|_)`),
-		RxExactCombined: regexp.MustCompile(`(?i)^(\d+[.,]?\d* seconden geleden|\d+[.,]?\d* maanden geleden|\d+[.,]?\d* minuten geleden|\d+[.,]?\d* seconde geleden|\d+[.,]?\d* minuut geleden|\d+[.,]?\d* dagen geleden|\d+[.,]?\d* maand geleden|\d+[.,]?\d* weken geleden|over \d+[.,]?\d* seconden|\d+[.,]?\d* jaar geleden|\d+[.,]?\d* week geleden|over \d+[.,]?\d* maanden|over \d+[.,]?\d* minuten|over \d+[.,]?\d* seconde|\d+[.,]?\d* dag geleden|\d+[.,]?\d* dgn geleden|\d+[.,]?\d* min geleden|\d+[.,]?\d* sec geleden|\d+[.,]?\d* uur geleden|over \d+[.,]?\d* minuut|over \d+[.,]?\d* dagen|over \d+[.,]?\d* maand|over \d+[.,]?\d* weken|over \d+[.,]?\d* jaar|over \d+[.,]?\d* week|over \d+[.,]?\d* dag|over \d+[.,]?\d* dgn|over \d+[.,]?\d* min|over \d+[.,]?\d* sec|over \d+[.,]?\d* uur)$`),
-		KnownWords:      []string{"binnen een minuut", "binnen een uur", "volgende maand", "volgende week", "volgend jaar", "vorige maand", "eergisteren", "vorige jaar", "vorige week", "deze maand", "overmorgen", "vorig jaar", "deze week", "donderdag", "september", "augustus", "december", "dit jaar", "februari", "gisteren", "november", "seconden", "woensdag", "zaterdag", "dinsdag", "geleden", "januari", "maandag", "maanden", "minuten", "oktober", "seconde", "vandaag", "vrijdag", "minuut", "morgen", "zondag", "april", "dagen", "maand", "maart", "weken", "jaar", "juli", "juni", "week", "apr", "aug", "dag", "dec", "feb", "gmt", "jan", "jul", "jun", "mei", "min", "mnd", "mrt", "nov", "okt", "sec", "sep", "utc", "uur", "am", "di", "do", "in", "jr", "ma", "nu", "om", "pm", "vr", "wk", "wo", "za", "zo", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "s", "z", "|"},
+		RxCombined:           regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(\d+[.,]?\d* seconden geleden|\d+[.,]?\d* maanden geleden|\d+[.,]?\d* minuten geleden|\d+[.,]?\d* seconde geleden|\d+[.,]?\d* minuut geleden|\d+[.,]?\d* dagen geleden|\d+[.,]?\d* maand geleden|\d+[.,]?\d* weken geleden|over \d+[.,]?\d* seconden|\d+[.,]?\d* jaar geleden|\d+[.,]?\d* week geleden|over \d+[.,]?\d* maanden|over \d+[.,]?\d* minuten|over \d+[.,]?\d* seconde|\d+[.,]?\d* dag geleden|\d+[.,]?\d* dgn geleden|\d+[.,]?\d* min geleden|\d+[.,]?\d* sec geleden|\d+[.,]?\d* uur geleden|over \d+[.,]?\d* minuut|over \d+[.,]?\d* dagen|over \d+[.,]?\d* maand|over \d+[.,]?\d* weken|over \d+[.,]?\d* jaar|over \d+[.,]?\d* week|over \d+[.,]?\d* dag|over \d+[.,]?\d* dgn|over \d+[.,]?\d* min|over \d+[.,]?\d* sec|over \d+[.,]?\d* uur)(\z|[^\pL\pM\d]|_)`),
+		RxExactCombined:      regexp.MustCompile(`(?i)^(\d+[.,]?\d* seconden geleden|\d+[.,]?\d* maanden geleden|\d+[.,]?\d* minuten geleden|\d+[.,]?\d* seconde geleden|\d+[.,]?\d* minuut geleden|\d+[.,]?\d* dagen geleden|\d+[.,]?\d* maand geleden|\d+[.,]?\d* weken geleden|over \d+[.,]?\d* seconden|\d+[.,]?\d* jaar geleden|\d+[.,]?\d* week geleden|over \d+[.,]?\d* maanden|over \d+[.,]?\d* minuten|over \d+[.,]?\d* seconde|\d+[.,]?\d* dag geleden|\d+[.,]?\d* dgn geleden|\d+[.,]?\d* min geleden|\d+[.,]?\d* sec geleden|\d+[.,]?\d* uur geleden|over \d+[.,]?\d* minuut|over \d+[.,]?\d* dagen|over \d+[.,]?\d* maand|over \d+[.,]?\d* weken|over \d+[.,]?\d* jaar|over \d+[.,]?\d* week|over \d+[.,]?\d* dag|over \d+[.,]?\d* dgn|over \d+[.,]?\d* min|over \d+[.,]?\d* sec|over \d+[.,]?\d* uur)$`),
+		ExactCombinedMatcher: matchExactcae67b650c5c7f42a1585fef9fbb46c6cf2e31be75a1fa7c6712ad8d11a249a1,
+		KnownWords:           []string{"binnen een minuut", "binnen een uur", "volgende maand", "volgende week", "volgend jaar", "vorige maand", "eergisteren", "vorige jaar", "vorige week", "deze maand", "overmorgen", "vorig jaar", "deze week", "donderdag", "september", "augustus", "december", "dit jaar", "februari", "gisteren", "november", "seconden", "woensdag", "zaterdag", "dinsdag", "geleden", "januari", "maandag", "maanden", "minuten", "oktober", "seconde", "vandaag", "vrijdag", "minuut", "morgen", "zondag", "april", "dagen", "maand", "maart", "weken", "jaar", "juli", "juni", "week", "apr", "aug", "dag", "dec", "feb", "gmt", "jan", "jul", "jun", "mei", "min", "mnd", "mrt", "nov", "okt", "sec", "sep", "utc", "uur", "am", "di", "do", "in", "jr", "ma", "nu", "om", "pm", "vr", "wk", "wo", "za", "zo", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "s", "u", "z", "|"},
 	})
 
 	nl_AW_Locale = merge(&nl_Locale, LocaleData{
@@ -184,4 +192,4 @@ func init() {
 		Name:      "nl-SX",
 		DateOrder: "DMY",
 	})
-}
+})

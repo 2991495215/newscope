@@ -2,7 +2,11 @@
 
 package data
 
-import "github.com/markusmobius/go-dateparser/internal/regexp"
+import (
+	"sync"
+
+	"github.com/markusmobius/go-dateparser/internal/regexp"
+)
 
 var (
 	sw_Locale    LocaleData
@@ -11,7 +15,9 @@ var (
 	sw_UG_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_sw = sync.OnceFunc(func() {
 	sw_Locale = merge(nil, LocaleData{
 		Name:      "sw",
 		DateOrder: "DMY",
@@ -119,9 +125,10 @@ func init() {
 			{regexp.MustCompile(`(?i)saa (\d+[.,]?\d*) iliyopita`), "$1 hour ago"},
 			{regexp.MustCompile(`(?i)baada ya saa (\d+[.,]?\d*)`), "in $1 hour"},
 		},
-		RxCombined:      regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(sekunde \d+[.,]?\d* zilizopita|dakika \d+[.,]?\d* zilizopita|sekunde \d+[.,]?\d* iliyopita|baada ya sekunde \d+[.,]?\d*|dakika \d+[.,]?\d* iliyopita|baada ya dakika \d+[.,]?\d*|miaka \d+[.,]?\d* iliyopita|miezi \d+[.,]?\d* iliyopita|siku \d+[.,]?\d* zilizopita|wiki \d+[.,]?\d* zilizopita|baada ya miaka \d+[.,]?\d*|baada ya miezi \d+[.,]?\d*|baada ya mwaka \d+[.,]?\d*|baada ya mwezi \d+[.,]?\d*|mwaka \d+[.,]?\d* uliopita|mwezi \d+[.,]?\d* uliopita|saa \d+[.,]?\d* zilizopita|siku \d+[.,]?\d* iliyopita|wiki \d+[.,]?\d* iliyopita|baada ya siku \d+[.,]?\d*|baada ya wiki \d+[.,]?\d*|saa \d+[.,]?\d* iliyopita|baada ya saa \d+[.,]?\d*)(\z|[^\pL\pM\d]|_)`),
-		RxExactCombined: regexp.MustCompile(`(?i)^(sekunde \d+[.,]?\d* zilizopita|dakika \d+[.,]?\d* zilizopita|sekunde \d+[.,]?\d* iliyopita|baada ya sekunde \d+[.,]?\d*|dakika \d+[.,]?\d* iliyopita|baada ya dakika \d+[.,]?\d*|miaka \d+[.,]?\d* iliyopita|miezi \d+[.,]?\d* iliyopita|siku \d+[.,]?\d* zilizopita|wiki \d+[.,]?\d* zilizopita|baada ya miaka \d+[.,]?\d*|baada ya miezi \d+[.,]?\d*|baada ya mwaka \d+[.,]?\d*|baada ya mwezi \d+[.,]?\d*|mwaka \d+[.,]?\d* uliopita|mwezi \d+[.,]?\d* uliopita|saa \d+[.,]?\d* zilizopita|siku \d+[.,]?\d* iliyopita|wiki \d+[.,]?\d* iliyopita|baada ya siku \d+[.,]?\d*|baada ya wiki \d+[.,]?\d*|saa \d+[.,]?\d* iliyopita|baada ya saa \d+[.,]?\d*)$`),
-		KnownWords:      []string{"mwaka uliopita", "mwezi uliopita", "wiki iliyopita", "dakika hii", "mwaka ujao", "mwezi ujao", "wiki ijayo", "mwaka huu", "mwezi huu", "sasa hivi", "alhamisi", "februari", "jumamosi", "jumapili", "jumatano", "jumatatu", "septemba", "wiki hii", "asubuhi", "desemba", "januari", "jumanne", "novemba", "saa hii", "sekunde", "agosti", "aprili", "dakika", "ijumaa", "mchana", "oktoba", "julai", "kesho", "machi", "mwaka", "mwezi", "jana", "juni", "siku", "wiki", "ago", "apr", "dak", "des", "feb", "gmt", "jan", "jul", "jun", "leo", "mac", "mei", "nov", "okt", "saa", "sek", "sep", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		RxCombined:           regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(sekunde \d+[.,]?\d* zilizopita|dakika \d+[.,]?\d* zilizopita|sekunde \d+[.,]?\d* iliyopita|baada ya sekunde \d+[.,]?\d*|dakika \d+[.,]?\d* iliyopita|baada ya dakika \d+[.,]?\d*|miaka \d+[.,]?\d* iliyopita|miezi \d+[.,]?\d* iliyopita|siku \d+[.,]?\d* zilizopita|wiki \d+[.,]?\d* zilizopita|baada ya miaka \d+[.,]?\d*|baada ya miezi \d+[.,]?\d*|baada ya mwaka \d+[.,]?\d*|baada ya mwezi \d+[.,]?\d*|mwaka \d+[.,]?\d* uliopita|mwezi \d+[.,]?\d* uliopita|saa \d+[.,]?\d* zilizopita|siku \d+[.,]?\d* iliyopita|wiki \d+[.,]?\d* iliyopita|baada ya siku \d+[.,]?\d*|baada ya wiki \d+[.,]?\d*|saa \d+[.,]?\d* iliyopita|baada ya saa \d+[.,]?\d*)(\z|[^\pL\pM\d]|_)`),
+		RxExactCombined:      regexp.MustCompile(`(?i)^(sekunde \d+[.,]?\d* zilizopita|dakika \d+[.,]?\d* zilizopita|sekunde \d+[.,]?\d* iliyopita|baada ya sekunde \d+[.,]?\d*|dakika \d+[.,]?\d* iliyopita|baada ya dakika \d+[.,]?\d*|miaka \d+[.,]?\d* iliyopita|miezi \d+[.,]?\d* iliyopita|siku \d+[.,]?\d* zilizopita|wiki \d+[.,]?\d* zilizopita|baada ya miaka \d+[.,]?\d*|baada ya miezi \d+[.,]?\d*|baada ya mwaka \d+[.,]?\d*|baada ya mwezi \d+[.,]?\d*|mwaka \d+[.,]?\d* uliopita|mwezi \d+[.,]?\d* uliopita|saa \d+[.,]?\d* zilizopita|siku \d+[.,]?\d* iliyopita|wiki \d+[.,]?\d* iliyopita|baada ya siku \d+[.,]?\d*|baada ya wiki \d+[.,]?\d*|saa \d+[.,]?\d* iliyopita|baada ya saa \d+[.,]?\d*)$`),
+		ExactCombinedMatcher: matchExact24824d51f4930a34481e4b26e4ec9f20d0920536587865cc692f692593e84b69,
+		KnownWords:           []string{"mwaka uliopita", "mwezi uliopita", "wiki iliyopita", "dakika hii", "mwaka ujao", "mwezi ujao", "wiki ijayo", "mwaka huu", "mwezi huu", "sasa hivi", "alhamisi", "februari", "jumamosi", "jumapili", "jumatano", "jumatatu", "septemba", "wiki hii", "asubuhi", "desemba", "januari", "jumanne", "novemba", "saa hii", "sekunde", "agosti", "aprili", "dakika", "ijumaa", "mchana", "oktoba", "julai", "kesho", "machi", "mwaka", "mwezi", "jana", "juni", "siku", "wiki", "ago", "apr", "dak", "des", "feb", "gmt", "jan", "jul", "jun", "leo", "mac", "mei", "nov", "okt", "saa", "sek", "sep", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
 
 	sw_CD_Locale = merge(&sw_Locale, LocaleData{
@@ -142,4 +149,4 @@ func init() {
 		Name:      "sw-UG",
 		DateOrder: "DMY",
 	})
-}
+})

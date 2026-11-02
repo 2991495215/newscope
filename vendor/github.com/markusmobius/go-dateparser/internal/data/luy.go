@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	luy_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_luy = sync.OnceFunc(func() {
 	luy_Locale = merge(nil, LocaleData{
 		Name:      "luy",
 		DateOrder: "DMY",
@@ -53,6 +59,7 @@ func init() {
 			"utc":             {"utc"},
 			"al":              {"thursday"},
 			"am":              {"am"},
+			"hr":              {"hour"},
 			"ij":              {"friday"},
 			"j1":              {"saturday"},
 			"j2":              {"sunday"},
@@ -92,6 +99,6 @@ func init() {
 			"lero":        "0 day ago",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"murwa wa katano", "murwa wa kanne", "this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "februari", "jumamosi", "jumapiri", "jumatano", "jumatatu", "septemba", "desemba", "idagika", "januari", "jumanne", "mgorova", "novemba", "sekunde", "agosti", "aprili", "mgamba", "muhiga", "oktoba", "ridiku", "risiza", "julai", "machi", "mweri", "isaa", "juni", "lero", "ago", "apr", "des", "feb", "gmt", "jan", "jul", "jun", "mar", "mei", "nov", "now", "okt", "sep", "utc", "al", "am", "ij", "j1", "j2", "j3", "j4", "j5", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"murwa wa katano", "murwa wa kanne", "this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "februari", "jumamosi", "jumapiri", "jumatano", "jumatatu", "septemba", "desemba", "idagika", "januari", "jumanne", "mgorova", "novemba", "sekunde", "agosti", "aprili", "mgamba", "muhiga", "oktoba", "ridiku", "risiza", "julai", "machi", "mweri", "isaa", "juni", "lero", "ago", "apr", "des", "feb", "gmt", "jan", "jul", "jun", "mar", "mei", "nov", "now", "okt", "sep", "utc", "al", "am", "hr", "ij", "j1", "j2", "j3", "j4", "j5", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

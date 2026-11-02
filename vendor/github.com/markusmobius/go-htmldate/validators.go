@@ -21,6 +21,9 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+
+	cpydatetime "github.com/markusmobius/go-dateutil/v2/compat/datetime"
+	dateutilparser "github.com/markusmobius/go-dateutil/v2/parser"
 )
 
 type yearCandidate struct {
@@ -29,10 +32,27 @@ type yearCandidate struct {
 	RawString string
 }
 
+func defaultMaxDate() time.Time {
+	location := localDateutilEnvironment.location
+	today := time.Now().In(location)
+	return time.Date(today.Year(), today.Month(), today.Day(), 23, 59, 59, 999999000, location)
+}
+
+func correctYear(year int) int {
+	if year < 100 {
+		if year >= 90 {
+			year += 1900
+		} else {
+			year += 2000
+		}
+	}
+
+	return year
+}
+
 // validateDateParts checks if date parts can be used to generate a valid date
 func validateDateParts(year, month, day int, opts Options) (time.Time, bool) {
-	// Make sure year is in Gregorian era
-	if year < 1582 {
+	if year < 1 || year > 9999 {
 		return timeZero, false
 	}
 
@@ -72,19 +92,38 @@ func validateDateParts(year, month, day int, opts Options) (time.Time, bool) {
 
 // validateDate checks if date is valid and within the possible date.
 func validateDate(date time.Time, opts Options) bool {
-	// If time is zero, it's not valid
-	if date.IsZero() {
+	return validateParsedDate(dateutilparser.Result{Time: date}, opts)
+}
+
+func validateParsedDate(date dateutilparser.Result, opts Options) bool {
+	return validateParsedDateInLocation(date, opts, localDateutilEnvironment.location)
+}
+
+func validateParsedDateInLocation(date dateutilparser.Result, opts Options, location *time.Location) bool {
+	if date.Time.IsZero() {
 		return false
 	}
 
-	// If min date specified, make sure our date is after that
-	if !opts.MinDate.IsZero() && date.Before(opts.MinDate) {
+	if !opts.MinDate.IsZero() && date.Time.Year() < opts.MinDate.Year() ||
+		!opts.MaxDate.IsZero() && date.Time.Year() > opts.MaxDate.Year() {
 		return false
 	}
 
-	// If max date specified, make sure our date is before that
-	if !opts.MaxDate.IsZero() && date.After(opts.MaxDate) {
+	timestamp, err := cpydatetime.Timestamp(date, location, date.Fold)
+	if err != nil {
 		return false
+	}
+	for index, bound := range []time.Time{opts.MinDate, opts.MaxDate} {
+		if bound.IsZero() {
+			continue
+		}
+		_, offset := bound.Zone()
+		limit, err := cpydatetime.Timestamp(dateutilparser.Result{
+			Time: bound, Aware: true, Offset: time.Duration(offset) * time.Second,
+		}, location, false)
+		if err != nil || index == 0 && timestamp < limit || index == 1 && timestamp > limit {
+			return false
+		}
 	}
 
 	return true
@@ -93,7 +132,11 @@ func validateDate(date time.Time, opts Options) bool {
 // compareValues compares the date expression to a reference.
 func compareValues(reference int64, attempt time.Time, opts Options) (int64, bool) {
 	changed := false
-	timestamp := attempt.Unix()
+	seconds, err := cpydatetime.Timestamp(dateutilparser.Result{Time: attempt}, localDateutilEnvironment.location, false)
+	if err != nil {
+		return reference, false
+	}
+	timestamp := int64(seconds)
 
 	if (opts.UseOriginalDate && (reference == 0 || timestamp < reference)) ||
 		(!opts.UseOriginalDate && timestamp > reference) {
@@ -107,7 +150,8 @@ func compareValues(reference int64, attempt time.Time, opts Options) (int64, boo
 // checkExtractedReference tests if the extracted reference date can be returned.
 func checkExtractedReference(reference int64, opts Options) time.Time {
 	if reference > 0 {
-		dt := time.Unix(reference, 0).UTC()
+		local := time.Unix(reference, 0).In(localDateutilEnvironment.location)
+		dt := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 		if validateDate(dt, opts) {
 			return dt
 		}
@@ -173,15 +217,9 @@ func plausibleYearFilter(
 		}
 
 		// Make sure the year is valid
-		var potentialYear int
-		if !toComplete {
-			potentialYear = yearVal
-		} else if yearVal < 100 {
-			if yearVal >= 90 {
-				potentialYear = 1900 + yearVal
-			} else {
-				potentialYear = 2000 + yearVal
-			}
+		potentialYear := yearVal
+		if toComplete {
+			potentialYear = correctYear(yearVal)
 		}
 
 		if potentialYear < minYear || potentialYear > maxYear {
@@ -220,19 +258,6 @@ func filterYmdCandidate(bestMatch []string, pattern string, copYear int, opts Op
 		log.Debug().Msgf("date found for pattern %s: %s", pattern, s)
 		return dt
 	}
-
-	// TODO: test and improve
-	// if opts.UseOriginalDate {
-	// 	if copYear == 0 || dt.Year() <= copYear {
-	// 		log.Debug().Msgf("original date found for pattern %s: %s", pattern.String(), str)
-	// 		return dt
-	// 	}
-	// } else {
-	// 	if copYear == 0 || dt.Year() >= copYear {
-	// 		log.Debug().Msgf("date found for pattern %s: %s", pattern.String(), str)
-	// 		return dt
-	// 	}
-	// }
 
 	return timeZero
 }

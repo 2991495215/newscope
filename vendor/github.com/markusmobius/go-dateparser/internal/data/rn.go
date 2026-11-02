@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	rn_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_rn = sync.OnceFunc(func() {
 	rn_Locale = merge(nil, LocaleData{
 		Name:      "rn",
 		DateOrder: "DMY",
@@ -61,6 +67,7 @@ func init() {
 			"zmw":             {"pm"},
 			"am":              {"am"},
 			"cu":              {"sunday"},
+			"hr":              {"hour"},
 			"pm":              {"pm"},
 			" ":               {" "},
 			"'":               {""},
@@ -94,6 +101,6 @@ func init() {
 			"uyu musi":     "0 day ago",
 			"now":          "0 second ago",
 		},
-		KnownWords: []string{"ku wa gatandatu", "indwi, iyinga", "ejo (haheze)", "ejo (hazoza)", "ku wa gatanu", "ku wa gatatu", "ku wa kabiri", "ku wa mbere", "this minute", "ku w'indwi", "ku wa kane", "last month", "next month", "nyandagaro", "this month", "last week", "last year", "ndamukiza", "next week", "next year", "ntwarante", "this hour", "this week", "this year", "gitugutu", "isegonda", "kigarama", "mukakaro", "munyonyo", "nyakanga", "ruhuhuma", "uyu musi", "ruheshi", "umunota", "rusama", "ukwezi", "umwaka", "isaha", "nzero", "umusi", "gas", "gic", "gmt", "gnd", "gnu", "gtu", "kab", "kam", "kan", "mat", "mbe", "mut", "now", "nya", "nze", "ugu", "uku", "ukw", "utc", "wer", "zmu", "zmw", "am", "cu", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"ku wa gatandatu", "indwi, iyinga", "ejo (haheze)", "ejo (hazoza)", "ku wa gatanu", "ku wa gatatu", "ku wa kabiri", "ku wa mbere", "this minute", "ku w'indwi", "ku wa kane", "last month", "next month", "nyandagaro", "this month", "last week", "last year", "ndamukiza", "next week", "next year", "ntwarante", "this hour", "this week", "this year", "gitugutu", "isegonda", "kigarama", "mukakaro", "munyonyo", "nyakanga", "ruhuhuma", "uyu musi", "ruheshi", "umunota", "rusama", "ukwezi", "umwaka", "isaha", "nzero", "umusi", "gas", "gic", "gmt", "gnd", "gnu", "gtu", "kab", "kam", "kan", "mat", "mbe", "mut", "now", "nya", "nze", "ugu", "uku", "ukw", "utc", "wer", "zmu", "zmw", "am", "cu", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

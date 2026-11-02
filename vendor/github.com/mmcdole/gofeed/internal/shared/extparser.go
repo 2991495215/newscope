@@ -4,23 +4,48 @@ import (
 	"strings"
 
 	"github.com/mmcdole/gofeed/extensions"
-	"github.com/mmcdole/goxpp"
+	xpp "github.com/mmcdole/goxpp/v2"
 )
 
-// IsExtension returns whether or not the current
-// XML element is an extension element (if it has a
-// non empty prefix)
-func IsExtension(p *xpp.XMLPullParser) bool {
-	space := strings.TrimSpace(p.Space)
-	prefix := PrefixForNamespace(space, p)
-	return !(prefix == "" || prefix == "rss" || prefix == "rdf" || prefix == "content")
+const (
+	Atom10Namespace   = "http://www.w3.org/2005/Atom"
+	Atom03Namespace   = "http://purl.org/atom/ns#"
+	RDFNamespace      = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	RSS10Namespace    = "http://purl.org/rss/1.0/"
+	RSS09Namespace    = "http://channel.netscape.com/rdf/simple/0.9/"
+	RSS09AltNamespace = "http://my.netscape.com/rdf/simple/0.9/"
+)
+
+// InNamespace reports whether the current element's resolved namespace is
+// one of namespaces.
+func InNamespace(p *xpp.Parser, namespaces ...string) bool {
+	space := strings.TrimSpace(p.Space())
+	for _, namespace := range namespaces {
+		if space == namespace {
+			return true
+		}
+	}
+	return false
+}
+
+// IsExtension reports whether the current element is outside the native
+// namespaces supplied by the format parser.
+func IsExtension(p *xpp.Parser, nativeNamespaces ...string) bool {
+	return !InNamespace(p, nativeNamespaces...)
+}
+
+// IsCanonicalNamespace reports whether space is a recognized extension
+// namespace (one with a canonical prefix).
+func IsCanonicalNamespace(space string) bool {
+	_, ok := canonicalNamespaces[strings.TrimSpace(space)]
+	return ok
 }
 
 // ParseExtension parses the current element of the
 // XMLPullParser as an extension element and updates
 // the extension map
-func ParseExtension(fe ext.Extensions, p *xpp.XMLPullParser) (ext.Extensions, error) {
-	prefix := PrefixForNamespace(p.Space, p)
+func ParseExtension(fe ext.Extensions, p *xpp.Parser) (ext.Extensions, error) {
+	prefix := PrefixForNamespace(p.Space(), p)
 
 	result, err := parseExtensionElement(p)
 	if err != nil {
@@ -32,29 +57,30 @@ func ParseExtension(fe ext.Extensions, p *xpp.XMLPullParser) (ext.Extensions, er
 		fe[prefix] = map[string][]ext.Extension{}
 	}
 	// Ensure the extension element slice exists
-	if _, ok := fe[prefix][p.Name]; !ok {
-		fe[prefix][p.Name] = []ext.Extension{}
+	if _, ok := fe[prefix][p.Name()]; !ok {
+		fe[prefix][p.Name()] = []ext.Extension{}
 	}
 
-	fe[prefix][p.Name] = append(fe[prefix][p.Name], result)
+	fe[prefix][p.Name()] = append(fe[prefix][p.Name()], result)
 	return fe, nil
 }
 
-func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
+func parseExtensionElement(p *xpp.Parser) (e ext.Extension, err error) {
 	if err = p.Expect(xpp.StartTag, "*"); err != nil {
 		return e, err
 	}
 
-	e.Name = p.Name
+	e.Name = p.Name()
 	e.Children = map[string][]ext.Extension{}
 	e.Attrs = map[string]string{}
 
-	for _, attr := range p.Attrs {
+	for _, attr := range p.Attrs() {
 		// TODO: Alright that we are stripping
 		// namespace information from attributes ?
 		e.Attrs[attr.Name.Local] = attr.Value
 	}
 
+	var value strings.Builder
 	for {
 		tok, err := p.Next()
 		if err != nil {
@@ -77,11 +103,11 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 
 			e.Children[child.Name] = append(e.Children[child.Name], child)
 		} else if tok == xpp.Text {
-			e.Value += p.Text
+			value.WriteString(p.Text())
 		}
 	}
 
-	e.Value = strings.TrimSpace(e.Value)
+	e.Value = strings.TrimSpace(value.String())
 
 	if err = p.Expect(xpp.EndTag, e.Name); err != nil {
 		return e, err
@@ -90,7 +116,10 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 	return e, nil
 }
 
-func PrefixForNamespace(space string, p *xpp.XMLPullParser) string {
+func PrefixForNamespace(space string, p *xpp.Parser) string {
+	// Namespace URI comparisons ignore surrounding whitespace in declarations.
+	space = strings.TrimSpace(space)
+
 	// First we check if the global namespace map
 	// contains an entry for this namespace/prefix.
 	// This way we can use the canonical prefix for this
@@ -99,15 +128,15 @@ func PrefixForNamespace(space string, p *xpp.XMLPullParser) string {
 		return prefix
 	}
 
-	// Next we check if the feed itself defined this
-	// this namespace and return it if we have a result.
-	if prefix, ok := p.Spaces[space]; ok {
+	// Next we check if the feed itself declared a prefix for this
+	// namespace and return it if we have a result.
+	if prefix, ok := p.PrefixForURI(space); ok && prefix != "" {
 		return prefix
 	}
 
-	// Lastly, any namespace which is not defined in the
-	// the feed will be the prefix itself when using Go's
-	// xml.Decoder.Token() method.
+	// Fall back to the value itself: a namespace bound only as the default
+	// yields its URI (a non-empty, collision-free key), and an undeclared
+	// prefix arrives in Space as the raw prefix and maps to itself.
 	return space
 }
 
@@ -117,6 +146,9 @@ func PrefixForNamespace(space string, p *xpp.XMLPullParser) string {
 //
 // These canonical prefixes override any prefixes used in the feed itself.
 var canonicalNamespaces = map[string]string{
+	Atom10Namespace: "atom",
+	Atom03Namespace: "atom03",
+
 	"http://webns.net/mvcb/":                                         "admin",
 	"http://purl.org/rss/1.0/modules/aggregation/":                   "ag",
 	"http://purl.org/rss/1.0/modules/annotate/":                      "annotate",

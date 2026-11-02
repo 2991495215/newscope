@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	asa_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_asa = sync.OnceFunc(func() {
 	asa_Locale = merge(nil, LocaleData{
 		Name:      "asa",
 		DateOrder: "DMY",
@@ -61,6 +67,7 @@ func init() {
 			"sep":       {"september"},
 			"utc":       {"utc"},
 			"am":        {"am"},
+			"hr":        {"hour"},
 			"pm":        {"pm"},
 			" ":         {" "},
 			"'":         {""},
@@ -94,6 +101,6 @@ func init() {
 			"yavo":        "in 1 day",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"this minute", "last month", "next month", "this month", "icheheavo", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "alhamisi", "februari", "ichamthi", "jumamosi", "jumapili", "jumatano", "jumatatu", "septemba", "thekunde", "desemba", "januari", "jumanne", "novemba", "agosti", "aprili", "dakika", "ijumaa", "ndisha", "oktoba", "ighuo", "julai", "machi", "mwaka", "mweji", "thiku", "iyoo", "juni", "thaa", "yavo", "ago", "alh", "apr", "dec", "feb", "gmt", "ijm", "jan", "jmo", "jnn", "jpi", "jtn", "jtt", "jul", "jun", "mac", "mei", "nov", "now", "okt", "sep", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"this minute", "last month", "next month", "this month", "icheheavo", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "alhamisi", "februari", "ichamthi", "jumamosi", "jumapili", "jumatano", "jumatatu", "septemba", "thekunde", "desemba", "januari", "jumanne", "novemba", "agosti", "aprili", "dakika", "ijumaa", "ndisha", "oktoba", "ighuo", "julai", "machi", "mwaka", "mweji", "thiku", "iyoo", "juni", "thaa", "yavo", "ago", "alh", "apr", "dec", "feb", "gmt", "ijm", "jan", "jmo", "jnn", "jpi", "jtn", "jtt", "jul", "jun", "mac", "mei", "nov", "now", "okt", "sep", "utc", "am", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

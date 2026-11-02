@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	haw_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_haw = sync.OnceFunc(func() {
 	haw_Locale = merge(nil, LocaleData{
 		Name:      "haw",
 		DateOrder: "DMY",
@@ -52,6 +58,7 @@ func init() {
 			"pep":        {"february"},
 			"utc":        {"utc"},
 			"am":         {"am"},
+			"hr":         {"hour"},
 			"lp":         {"sunday"},
 			"p1":         {"monday"},
 			"p2":         {"tuesday"},
@@ -92,6 +99,6 @@ func init() {
 			"today":       "0 day ago",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"this minute", "kepakemapa", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "pepeluali", "this hour", "this week", "this year", "yesterday", "'apelila", "'okakopa", "kekemapa", "nowemapa", "po'akahi", "po'akolu", "po'alima", "tomorrow", "'aukake", "ianuali", "po'alua", "po'aono", "lapule", "malaki", "minute", "po'aha", "second", "iulai", "month", "today", "hour", "iune", "week", "year", "'ap", "'au", "'ok", "day", "gmt", "ian", "iul", "iun", "kek", "kep", "mal", "mei", "now", "pep", "utc", "am", "lp", "p1", "p2", "p3", "p4", "p5", "p6", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"this minute", "kepakemapa", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "pepeluali", "this hour", "this week", "this year", "yesterday", "'apelila", "'okakopa", "kekemapa", "nowemapa", "po'akahi", "po'akolu", "po'alima", "tomorrow", "'aukake", "ianuali", "po'alua", "po'aono", "lapule", "malaki", "minute", "po'aha", "second", "iulai", "month", "today", "hour", "iune", "week", "year", "'ap", "'au", "'ok", "day", "gmt", "ian", "iul", "iun", "kek", "kep", "mal", "mei", "now", "pep", "utc", "am", "hr", "lp", "p1", "p2", "p3", "p4", "p5", "p6", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

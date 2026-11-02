@@ -42,7 +42,7 @@ type TokenParseResult struct {
 type Parser struct {
 	Now                 time.Time
 	Config              *setting.Configuration
-	FnGetDateTimeParams func(p *Parser) map[string]int
+	FnGetDateTimeParams func(p *Parser) (map[string]int, error)
 	FnCreateDateTime    func(p *Parser, params map[string]int, loc *time.Location) (time.Time, error)
 	FnGetDatePartValue  func(p *Parser, component, token, directive string) (int, bool)
 
@@ -288,7 +288,10 @@ func (p *Parser) Parse(tz timezone.OffsetData) (date.Date, error) {
 
 	// Fetch datetime parameters
 	dtLocation := p.Now.Location()
-	dtParams := p.FnGetDateTimeParams(p)
+	dtParams, err := p.FnGetDateTimeParams(p)
+	if err != nil {
+		return date.Date{}, err
+	}
 	if !p.ParsedTime.IsZero() {
 		dtParams["hour"] = p.ParsedTime.Hour()
 		dtParams["minute"] = p.ParsedTime.Minute()
@@ -359,37 +362,57 @@ func (p *Parser) parseDigitToken(tokenText string, skippedComponent string) ([]T
 		Type: tokenizer.Digit,
 	}
 
-	for i, directives := range p.NumberDirectives {
-		// Check if this component need to be skipped
-		component := p.Components[i]
-		if component == skippedComponent {
-			continue
-		}
+	components, numberDirectives := p.Components, p.NumberDirectives
+	if skippedComponent == "year" && p.ComponentValues["day"] == 0 && p.ComponentValues["month"] == 0 &&
+		(p.Config == nil || !p.Config.DateOrderIsExplicit) {
+		components = []string{"month", "day", "year"}
+		numberDirectives = [][]string{{"1"}, {"2"}, {"2006", "06"}}
+	}
 
-		// Fetch previous value
-		prevValue := p.ComponentValues[component]
-		prevToken := p.ComponentTokens[component]
-
-		// Try each directive
-		for _, directive := range directives {
-			partValue, found := p.FnGetDatePartValue(p, component, tokenText, directive)
-			if !found {
+	tryDirectives := func(skipTwoDigitYear bool) ([]TokenParseResult, error) {
+		for index, directives := range numberDirectives {
+			component := components[index]
+			if component == skippedComponent {
 				continue
 			}
 
-			if prevValue == 0 {
-				return p.setAndReturn(component, token, partValue, false)
-			} else if prevToken.Type == tokenizer.Digit {
-				_, found := p.FnGetDatePartValue(p, component, prevToken.Text, directive)
+			prevValue := p.ComponentValues[component]
+			prevToken := p.ComponentTokens[component]
+			for _, directive := range directives {
+				if skipTwoDigitYear && directive == "06" {
+					continue
+				}
+				partValue, found := p.FnGetDatePartValue(p, component, tokenText, directive)
 				if !found {
-					p.UnsetTokens = append(p.UnsetTokens, prevToken)
+					continue
+				}
+				if prevValue == 0 {
 					return p.setAndReturn(component, token, partValue, false)
+				} else if prevToken.Type == tokenizer.Digit {
+					_, found := p.FnGetDatePartValue(p, component, prevToken.Text, directive)
+					if !found {
+						p.UnsetTokens = append(p.UnsetTokens, prevToken)
+						return p.setAndReturn(component, token, partValue, false)
+					}
 				}
 			}
 		}
+		return nil, fmt.Errorf("unable to parse %s", tokenText)
 	}
 
-	return nil, fmt.Errorf("unable to parse %s", tokenText)
+	afterYear := false
+	for _, component := range p.Components {
+		if afterYear && p.ComponentValues[component] != 0 {
+			if result, err := tryDirectives(true); err == nil {
+				return result, nil
+			}
+			break
+		}
+		if component == "year" {
+			afterYear = true
+		}
+	}
+	return tryDirectives(false)
 }
 
 func (p *Parser) parseLetterToken(tokenText string, skippedComponent string) ([]TokenParseResult, error) {

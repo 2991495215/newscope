@@ -2,7 +2,11 @@
 
 package data
 
-import "github.com/markusmobius/go-dateparser/internal/regexp"
+import (
+	"sync"
+
+	"github.com/markusmobius/go-dateparser/internal/regexp"
+)
 
 var (
 	de_Locale    LocaleData
@@ -14,7 +18,9 @@ var (
 	de_LU_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_de = sync.OnceFunc(func() {
 	de_Locale = merge(nil, LocaleData{
 		Name:                  "de",
 		DateOrder:             "DMY",
@@ -200,9 +206,10 @@ func init() {
 			{regexp.MustCompile(`(?i)in (\d+[.,]?\d*) m`), "in $1 minute"},
 			{regexp.MustCompile(`(?i)in (\d+[.,]?\d*) s`), "in $1 second"},
 		},
-		RxCombined:      regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(vor \d+[.,]?\d* sekunden|in \d+[.,]?\d* sekunden|vor \d+[.,]?\d* minuten|vor \d+[.,]?\d* monaten|vor \d+[.,]?\d* sekunde|vor \d+[.,]?\d* stunden|in \d+[.,]?\d* minuten|in \d+[.,]?\d* monaten|in \d+[.,]?\d* sekunde|in \d+[.,]?\d* stunden|vor \d+[.,]?\d* jahren|vor \d+[.,]?\d* minute|vor \d+[.,]?\d* stunde|vor \d+[.,]?\d* wochen|in \d+[.,]?\d* jahren|in \d+[.,]?\d* minute|in \d+[.,]?\d* stunde|in \d+[.,]?\d* wochen|vor \d+[.,]?\d* monat|vor \d+[.,]?\d* tagen|vor \d+[.,]?\d* woche|in \d+[.,]?\d* monat|in \d+[.,]?\d* tagen|in \d+[.,]?\d* woche|vor \d+[.,]?\d* jahr|in \d+[.,]?\d* jahr|vor \d+[.,]?\d* min|vor \d+[.,]?\d* sek|vor \d+[.,]?\d* std|vor \d+[.,]?\d* tag|vor \d+[.,]?\d*\s*h|vor \d+[.,]?\d*\s*m|vor \d+[.,]?\d*\s*s|in \d+[.,]?\d* min|in \d+[.,]?\d* sek|in \d+[.,]?\d* std|in \d+[.,]?\d* tag|vor \d+[.,]?\d* wo|in \d+[.,]?\d* wo|vor \d+[.,]?\d* m|vor \d+[.,]?\d* s|in \d+[.,]?\d* m|in \d+[.,]?\d* s)(\z|[^\pL\pM\d]|_)`),
-		RxExactCombined: regexp.MustCompile(`(?i)^(vor \d+[.,]?\d* sekunden|in \d+[.,]?\d* sekunden|vor \d+[.,]?\d* minuten|vor \d+[.,]?\d* monaten|vor \d+[.,]?\d* sekunde|vor \d+[.,]?\d* stunden|in \d+[.,]?\d* minuten|in \d+[.,]?\d* monaten|in \d+[.,]?\d* sekunde|in \d+[.,]?\d* stunden|vor \d+[.,]?\d* jahren|vor \d+[.,]?\d* minute|vor \d+[.,]?\d* stunde|vor \d+[.,]?\d* wochen|in \d+[.,]?\d* jahren|in \d+[.,]?\d* minute|in \d+[.,]?\d* stunde|in \d+[.,]?\d* wochen|vor \d+[.,]?\d* monat|vor \d+[.,]?\d* tagen|vor \d+[.,]?\d* woche|in \d+[.,]?\d* monat|in \d+[.,]?\d* tagen|in \d+[.,]?\d* woche|vor \d+[.,]?\d* jahr|in \d+[.,]?\d* jahr|vor \d+[.,]?\d* min|vor \d+[.,]?\d* sek|vor \d+[.,]?\d* std|vor \d+[.,]?\d* tag|vor \d+[.,]?\d*\s*h|vor \d+[.,]?\d*\s*m|vor \d+[.,]?\d*\s*s|in \d+[.,]?\d* min|in \d+[.,]?\d* sek|in \d+[.,]?\d* std|in \d+[.,]?\d* tag|vor \d+[.,]?\d* wo|in \d+[.,]?\d* wo|vor \d+[.,]?\d* m|vor \d+[.,]?\d* s|in \d+[.,]?\d* m|in \d+[.,]?\d* s)$`),
-		KnownWords:      []string{"in dieser minute", "in dieser stunde", "nachsten monat", "letzten monat", "nachste woche", "nachstes jahr", "diesen monat", "letzte woche", "letztes jahr", "diese woche", "dieses jahr", "donnerstag", "ubermorgen", "vorgestern", "september", "dezember", "dienstag", "mittwoch", "november", "sekunden", "februar", "freitag", "gestern", "minuten", "monaten", "oktober", "samstag", "sekunde", "sonntag", "stunden", "august", "jahren", "janner", "januar", "minute", "monate", "montag", "morgen", "stunde", "wochen", "april", "feber", "heute", "jahre", "jetzt", "monat", "nachm", "tagen", "woche", "etwa", "jahr", "juli", "juni", "marz", "sept", "tage", "vorm", "apr", "aug", "dez", "die", "don", "feb", "fre", "gmt", "jan", "jul", "jun", "mai", "mar", "min", "mit", "mon", "mrz", "nov", "okt", "sam", "sek", "sep", "son", "std", "tag", "uhr", "und", "utc", "vor", "am", "di", "do", "fr", "im", "in", "mi", "mo", "pm", "sa", "so", "um", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "j", "m", "w", "z", "|"},
+		RxCombined:           regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(vor \d+[.,]?\d* sekunden|in \d+[.,]?\d* sekunden|vor \d+[.,]?\d* minuten|vor \d+[.,]?\d* monaten|vor \d+[.,]?\d* sekunde|vor \d+[.,]?\d* stunden|in \d+[.,]?\d* minuten|in \d+[.,]?\d* monaten|in \d+[.,]?\d* sekunde|in \d+[.,]?\d* stunden|vor \d+[.,]?\d* jahren|vor \d+[.,]?\d* minute|vor \d+[.,]?\d* stunde|vor \d+[.,]?\d* wochen|in \d+[.,]?\d* jahren|in \d+[.,]?\d* minute|in \d+[.,]?\d* stunde|in \d+[.,]?\d* wochen|vor \d+[.,]?\d* monat|vor \d+[.,]?\d* tagen|vor \d+[.,]?\d* woche|in \d+[.,]?\d* monat|in \d+[.,]?\d* tagen|in \d+[.,]?\d* woche|vor \d+[.,]?\d* jahr|in \d+[.,]?\d* jahr|vor \d+[.,]?\d* min|vor \d+[.,]?\d* sek|vor \d+[.,]?\d* std|vor \d+[.,]?\d* tag|vor \d+[.,]?\d*\s*h|vor \d+[.,]?\d*\s*m|vor \d+[.,]?\d*\s*s|in \d+[.,]?\d* min|in \d+[.,]?\d* sek|in \d+[.,]?\d* std|in \d+[.,]?\d* tag|vor \d+[.,]?\d* wo|in \d+[.,]?\d* wo|vor \d+[.,]?\d* m|vor \d+[.,]?\d* s|in \d+[.,]?\d* m|in \d+[.,]?\d* s)(\z|[^\pL\pM\d]|_)`),
+		RxExactCombined:      regexp.MustCompile(`(?i)^(vor \d+[.,]?\d* sekunden|in \d+[.,]?\d* sekunden|vor \d+[.,]?\d* minuten|vor \d+[.,]?\d* monaten|vor \d+[.,]?\d* sekunde|vor \d+[.,]?\d* stunden|in \d+[.,]?\d* minuten|in \d+[.,]?\d* monaten|in \d+[.,]?\d* sekunde|in \d+[.,]?\d* stunden|vor \d+[.,]?\d* jahren|vor \d+[.,]?\d* minute|vor \d+[.,]?\d* stunde|vor \d+[.,]?\d* wochen|in \d+[.,]?\d* jahren|in \d+[.,]?\d* minute|in \d+[.,]?\d* stunde|in \d+[.,]?\d* wochen|vor \d+[.,]?\d* monat|vor \d+[.,]?\d* tagen|vor \d+[.,]?\d* woche|in \d+[.,]?\d* monat|in \d+[.,]?\d* tagen|in \d+[.,]?\d* woche|vor \d+[.,]?\d* jahr|in \d+[.,]?\d* jahr|vor \d+[.,]?\d* min|vor \d+[.,]?\d* sek|vor \d+[.,]?\d* std|vor \d+[.,]?\d* tag|vor \d+[.,]?\d*\s*h|vor \d+[.,]?\d*\s*m|vor \d+[.,]?\d*\s*s|in \d+[.,]?\d* min|in \d+[.,]?\d* sek|in \d+[.,]?\d* std|in \d+[.,]?\d* tag|vor \d+[.,]?\d* wo|in \d+[.,]?\d* wo|vor \d+[.,]?\d* m|vor \d+[.,]?\d* s|in \d+[.,]?\d* m|in \d+[.,]?\d* s)$`),
+		ExactCombinedMatcher: matchExact50127ae6c0fcbda22f6b7ecbf9fafd08a75882874903990e20e6be8777af6c3a,
+		KnownWords:           []string{"in dieser minute", "in dieser stunde", "nachsten monat", "letzten monat", "nachste woche", "nachstes jahr", "diesen monat", "letzte woche", "letztes jahr", "diese woche", "dieses jahr", "donnerstag", "ubermorgen", "vorgestern", "september", "dezember", "dienstag", "mittwoch", "november", "sekunden", "februar", "freitag", "gestern", "minuten", "monaten", "oktober", "samstag", "sekunde", "sonntag", "stunden", "august", "jahren", "janner", "januar", "minute", "monate", "montag", "morgen", "stunde", "wochen", "april", "feber", "heute", "jahre", "jetzt", "monat", "nachm", "tagen", "woche", "etwa", "jahr", "juli", "juni", "marz", "sept", "tage", "vorm", "apr", "aug", "dez", "die", "don", "feb", "fre", "gmt", "jan", "jul", "jun", "mai", "mar", "min", "mit", "mon", "mrz", "nov", "okt", "sam", "sek", "sep", "son", "std", "tag", "uhr", "und", "utc", "vor", "am", "di", "do", "fr", "im", "in", "mi", "mo", "pm", "sa", "so", "um", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "j", "m", "w", "z", "|"},
 	})
 
 	de_AT_Locale = merge(&de_Locale, LocaleData{
@@ -234,4 +241,4 @@ func init() {
 		Name:      "de-LU",
 		DateOrder: "DMY",
 	})
-}
+})

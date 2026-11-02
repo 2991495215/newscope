@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	az_Cyrl_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_az_Cyrl = sync.OnceFunc(func() {
 	az_Cyrl_Locale = merge(nil, LocaleData{
 		Name:      "az-Cyrl",
 		DateOrder: "DMY",
@@ -52,6 +58,7 @@ func init() {
 			"фев":             {"february"},
 			"јан":             {"january"},
 			"am":              {"am"},
+			"hr":              {"hour"},
 			"pm":              {"pm"},
 			"ам":              {"am"},
 			"бе":              {"monday"},
@@ -94,6 +101,6 @@ func init() {
 			"today":       "0 day ago",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"чәршәнбә ахшамы", "базар ертәси", "this minute", "ҹүмә ахшамы", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "yesterday", "tomorrow", "сентјабр", "чәршәнбә", "октјабр", "minute", "second", "август", "декабр", "нојабр", "феврал", "јанвар", "month", "today", "апрел", "базар", "шәнбә", "hour", "week", "year", "ијул", "ијун", "март", "ҹүмә", "day", "gmt", "now", "utc", "авг", "апр", "дек", "ијл", "ијн", "маи", "мар", "ној", "окт", "сен", "фев", "јан", "am", "pm", "ам", "бе", "пм", "ча", "ҹа", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|", "б", "ч", "ш", "ҹ"},
+		KnownWords: []string{"чәршәнбә ахшамы", "базар ертәси", "this minute", "ҹүмә ахшамы", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "yesterday", "tomorrow", "сентјабр", "чәршәнбә", "октјабр", "minute", "second", "август", "декабр", "нојабр", "феврал", "јанвар", "month", "today", "апрел", "базар", "шәнбә", "hour", "week", "year", "ијул", "ијун", "март", "ҹүмә", "day", "gmt", "now", "utc", "авг", "апр", "дек", "ијл", "ијн", "маи", "мар", "ној", "окт", "сен", "фев", "јан", "am", "hr", "pm", "ам", "бе", "пм", "ча", "ҹа", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|", "б", "ч", "ш", "ҹ"},
 	})
-}
+})

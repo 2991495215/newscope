@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	saq_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_saq = sync.OnceFunc(func() {
 	saq_Locale = merge(nil, LocaleData{
 		Name:      "saq",
 		DateOrder: "DMY",
@@ -59,6 +65,7 @@ func init() {
 			"utc":                 {"utc"},
 			"waa":                 {"february"},
 			"am":                  {"am"},
+			"hr":                  {"hour"},
 			"pm":                  {"pm"},
 			" ":                   {" "},
 			"'":                   {""},
@@ -92,6 +99,6 @@ func init() {
 			"duo":         "0 day ago",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"lapa le tomon waare", "lapa le tomon obo", "mderot ee ong'wan", "lapa le ong'wan", "mderot ee inet", "mderot ee kuni", "mderot ee sapa", "lapa le isiet", "lapa le okuni", "lapa le tomon", "lapa le waare", "mderot ee are", "mderot ee ile", "mderot ee kwe", "lapa le imet", "lapa le saal", "lapa le sapa", "lapa le ile", "lapa le obo", "this minute", "last month", "next month", "saipa napo", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "isekondi", "idakika", "taisere", "tesiran", "ng'ole", "mpari", "teipa", "lapa", "lari", "saai", "are", "duo", "gmt", "ile", "ime", "ine", "isi", "kun", "kwe", "now", "obo", "oku", "ong", "saa", "sap", "tob", "tom", "tow", "utc", "waa", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"lapa le tomon waare", "lapa le tomon obo", "mderot ee ong'wan", "lapa le ong'wan", "mderot ee inet", "mderot ee kuni", "mderot ee sapa", "lapa le isiet", "lapa le okuni", "lapa le tomon", "lapa le waare", "mderot ee are", "mderot ee ile", "mderot ee kwe", "lapa le imet", "lapa le saal", "lapa le sapa", "lapa le ile", "lapa le obo", "this minute", "last month", "next month", "saipa napo", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "isekondi", "idakika", "taisere", "tesiran", "ng'ole", "mpari", "teipa", "lapa", "lari", "saai", "are", "duo", "gmt", "ile", "ime", "ine", "isi", "kun", "kwe", "now", "obo", "oku", "ong", "saa", "sap", "tob", "tom", "tow", "utc", "waa", "am", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

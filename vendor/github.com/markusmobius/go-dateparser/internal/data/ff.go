@@ -2,6 +2,10 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	ff_Locale    LocaleData
 	ff_CM_Locale LocaleData
@@ -9,7 +13,9 @@ var (
 	ff_MR_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_ff = sync.OnceFunc(func() {
 	ff_Locale = merge(nil, LocaleData{
 		Name:      "ff",
 		DateOrder: "DMY",
@@ -65,6 +71,7 @@ func init() {
 			"utc":        {"utc"},
 			"yar":        {"october"},
 			"am":         {"am"},
+			"hr":         {"hour"},
 			"pm":         {"pm"},
 			" ":          {" "},
 			"'":          {""},
@@ -98,7 +105,7 @@ func init() {
 			"haŋki":       "1 day ago",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"this minute", "hoore-biir", "last month", "next month", "this month", "last week", "last year", "naasaande", "next week", "next year", "njeslaare", "this hour", "this week", "this year", "hitaande", "majaango", "mawbaare", "yarkomaa", "kikiiɗe", "yontere", "aaɓnde", "duujal", "hannde", "jaŋngo", "mawnde", "nalnde", "seeɗto", "siilto", "subaka", "bowte", "colte", "haŋki", "hoƴom", "jolal", "korse", "lewru", "mbooy", "morso", "siilo", "waktu", "dewo", "juko", "aaɓ", "bow", "col", "dew", "duu", "gmt", "hbi", "jol", "juk", "kor", "maw", "mbo", "mor", "mwd", "naa", "nje", "now", "see", "sii", "slt", "utc", "yar", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"this minute", "hoore-biir", "last month", "next month", "this month", "last week", "last year", "naasaande", "next week", "next year", "njeslaare", "this hour", "this week", "this year", "hitaande", "majaango", "mawbaare", "yarkomaa", "kikiiɗe", "yontere", "aaɓnde", "duujal", "hannde", "jaŋngo", "mawnde", "nalnde", "seeɗto", "siilto", "subaka", "bowte", "colte", "haŋki", "hoƴom", "jolal", "korse", "lewru", "mbooy", "morso", "siilo", "waktu", "dewo", "juko", "aaɓ", "bow", "col", "dew", "duu", "gmt", "hbi", "jol", "juk", "kor", "maw", "mbo", "mor", "mwd", "naa", "nje", "now", "see", "sii", "slt", "utc", "yar", "am", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
 
 	ff_CM_Locale = merge(&ff_Locale, LocaleData{
@@ -115,4 +122,4 @@ func init() {
 		Name:      "ff-MR",
 		DateOrder: "DMY",
 	})
-}
+})

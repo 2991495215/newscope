@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	xog_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_xog = sync.OnceFunc(func() {
 	xog_Locale = merge(nil, LocaleData{
 		Name:      "xog",
 		DateOrder: "DMY",
@@ -62,6 +68,7 @@ func init() {
 			"seb":         {"september"},
 			"utc":         {"utc"},
 			"am":          {"am"},
+			"hr":          {"hour"},
 			"pm":          {"pm"},
 			" ":           {" "},
 			"'":           {""},
@@ -95,6 +102,6 @@ func init() {
 			"edho":              "1 day ago",
 			"now":               "0 second ago",
 		},
-		KnownWords: []string{"olwaleelo (leelo)", "obutikitiki", "this minute", "last month", "next month", "olokutaanu", "olomukaaga", "sebuttemba", "this month", "febwaliyo", "janwaliyo", "last week", "last year", "next week", "next year", "owokubili", "owokusatu", "this hour", "this week", "this year", "edakiika", "esabiiti", "okitobba", "agusito", "desemba", "julaayi", "novemba", "olokuna", "olunaku", "sabiiti", "balaza", "eigulo", "essawa", "marisi", "munkyo", "omwaka", "omwezi", "apuli", "enkyo", "juuni", "maayi", "bala", "edho", "kubi", "kuna", "kusa", "kuta", "muka", "sabi", "agu", "apu", "des", "feb", "gmt", "jan", "jul", "juu", "maa", "mar", "nov", "now", "oki", "seb", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"olwaleelo (leelo)", "obutikitiki", "this minute", "last month", "next month", "olokutaanu", "olomukaaga", "sebuttemba", "this month", "febwaliyo", "janwaliyo", "last week", "last year", "next week", "next year", "owokubili", "owokusatu", "this hour", "this week", "this year", "edakiika", "esabiiti", "okitobba", "agusito", "desemba", "julaayi", "novemba", "olokuna", "olunaku", "sabiiti", "balaza", "eigulo", "essawa", "marisi", "munkyo", "omwaka", "omwezi", "apuli", "enkyo", "juuni", "maayi", "bala", "edho", "kubi", "kuna", "kusa", "kuta", "muka", "sabi", "agu", "apu", "des", "feb", "gmt", "jan", "jul", "juu", "maa", "mar", "nov", "now", "oki", "seb", "utc", "am", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

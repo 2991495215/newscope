@@ -2,14 +2,20 @@
 
 package data
 
-import "github.com/markusmobius/go-dateparser/internal/regexp"
+import (
+	"sync"
+
+	"github.com/markusmobius/go-dateparser/internal/regexp"
+)
 
 var (
 	os_Locale    LocaleData
 	os_RU_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_os = sync.OnceFunc(func() {
 	os_Locale = merge(nil, LocaleData{
 		Name:      "os",
 		DateOrder: "DMY",
@@ -40,6 +46,7 @@ func init() {
 			"мартъи":          {"march"},
 			"ноябры":          {"november"},
 			"ноябрь":          {"november"},
+			"сахаты":          {"hour"},
 			"секунд":          {"second"},
 			"январы":          {"january"},
 			"январь":          {"january"},
@@ -118,13 +125,14 @@ func init() {
 			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) боны размӕ`), "$1 day ago"},
 			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) боны фӕстӕ`), "in $1 day"},
 		},
-		RxCombined:      regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(\d+[.,]?\d* сахаты размӕ|\d+[.,]?\d* сахаты фӕстӕ|\d+[.,]?\d* бон раздӕр|\d+[.,]?\d* боны размӕ|\d+[.,]?\d* боны фӕстӕ)(\z|[^\pL\pM\d]|_)`),
-		RxExactCombined: regexp.MustCompile(`(?i)^(\d+[.,]?\d* сахаты размӕ|\d+[.,]?\d* сахаты фӕстӕ|\d+[.,]?\d* бон раздӕр|\d+[.,]?\d* боны размӕ|\d+[.,]?\d* боны фӕстӕ)$`),
-		KnownWords:      []string{"ӕмбисбоны размӕ", "ӕмбисбоны фӕстӕ", "this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "къуырисӕр", "маирӕмбон", "хуыцаубон", "мартъииы", "сентябры", "сентябрь", "цыппӕрӕм", "ӕртыццӕг", "августы", "декабры", "декабрь", "октябры", "октябрь", "февралы", "февраль", "август", "апрелы", "апрель", "дыццӕг", "къуыри", "мартъи", "ноябры", "ноябрь", "секунд", "январы", "январь", "минут", "сабат", "сахат", "абон", "знон", "июлы", "июль", "июны", "июнь", "маиы", "март", "нояб", "сент", "февр", "gmt", "now", "utc", "авг", "апр", "бон", "дек", "дцг", "крс", "маи", "мар", "мрб", "мӕи", "ноя", "окт", "сбт", "сен", "сом", "фев", "хцб", "цпр", "янв", "ӕрт", "am", "pm", "аз", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		RxCombined:           regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(\d+[.,]?\d* сахаты размӕ|\d+[.,]?\d* сахаты фӕстӕ|\d+[.,]?\d* бон раздӕр|\d+[.,]?\d* боны размӕ|\d+[.,]?\d* боны фӕстӕ)(\z|[^\pL\pM\d]|_)`),
+		RxExactCombined:      regexp.MustCompile(`(?i)^(\d+[.,]?\d* сахаты размӕ|\d+[.,]?\d* сахаты фӕстӕ|\d+[.,]?\d* бон раздӕр|\d+[.,]?\d* боны размӕ|\d+[.,]?\d* боны фӕстӕ)$`),
+		ExactCombinedMatcher: matchExact363a2b772ea7d561f9da72d9dc935d04a0117718d35c306427d769355e7ddaba,
+		KnownWords:           []string{"ӕмбисбоны размӕ", "ӕмбисбоны фӕстӕ", "this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "къуырисӕр", "маирӕмбон", "хуыцаубон", "мартъииы", "сентябры", "сентябрь", "цыппӕрӕм", "ӕртыццӕг", "августы", "декабры", "декабрь", "октябры", "октябрь", "февралы", "февраль", "август", "апрелы", "апрель", "дыццӕг", "къуыри", "мартъи", "ноябры", "ноябрь", "сахаты", "секунд", "январы", "январь", "минут", "сабат", "сахат", "абон", "знон", "июлы", "июль", "июны", "июнь", "маиы", "март", "нояб", "сент", "февр", "gmt", "now", "utc", "авг", "апр", "бон", "дек", "дцг", "крс", "маи", "мар", "мрб", "мӕи", "ноя", "окт", "сбт", "сен", "сом", "фев", "хцб", "цпр", "янв", "ӕрт", "am", "pm", "аз", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
 
 	os_RU_Locale = merge(&os_Locale, LocaleData{
 		Name:      "os-RU",
 		DateOrder: "DMY",
 	})
-}
+})

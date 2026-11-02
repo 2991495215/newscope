@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	ebu_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_ebu = sync.OnceFunc(func() {
 	ebu_Locale = merge(nil, LocaleData{
 		Name:      "ebu",
 		DateOrder: "DMY",
@@ -59,6 +65,7 @@ func init() {
 			"tat":                     {"monday"},
 			"utc":                     {"utc"},
 			"am":                      {"am"},
+			"hr":                      {"hour"},
 			"ki":                      {"am"},
 			"pm":                      {"pm"},
 			"ut":                      {"pm"},
@@ -94,6 +101,6 @@ func init() {
 			"ruciu":       "in 1 day",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"mweri wa ikumi na kairi", "mweri wa ikumi na umwe", "mweri wa gatantatu", "mweri wa mugwanja", "mweri wa kathatu", "mweri wa gatano", "mweri wa kanana", "mweri wa ikumi", "mweri wa kairi", "mweri wa kenda", "mweri wa mbere", "mweri wa kana", "njumamothii", "this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "njumatano", "njumatatu", "this hour", "this week", "this year", "aramithi", "muthenya", "njumaine", "ndagika", "sekondi", "umunthi", "kiumia", "njumaa", "igoro", "ithaa", "mwaka", "mweri", "ruciu", "arm", "gan", "gat", "gmt", "igi", "iku", "imw", "ine", "kai", "kan", "kat", "ken", "kma", "knn", "maa", "mbe", "mug", "nmm", "now", "tan", "tat", "utc", "am", "ki", "pm", "ut", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"mweri wa ikumi na kairi", "mweri wa ikumi na umwe", "mweri wa gatantatu", "mweri wa mugwanja", "mweri wa kathatu", "mweri wa gatano", "mweri wa kanana", "mweri wa ikumi", "mweri wa kairi", "mweri wa kenda", "mweri wa mbere", "mweri wa kana", "njumamothii", "this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "njumatano", "njumatatu", "this hour", "this week", "this year", "aramithi", "muthenya", "njumaine", "ndagika", "sekondi", "umunthi", "kiumia", "njumaa", "igoro", "ithaa", "mwaka", "mweri", "ruciu", "arm", "gan", "gat", "gmt", "igi", "iku", "imw", "ine", "kai", "kan", "kat", "ken", "kma", "knn", "maa", "mbe", "mug", "nmm", "now", "tan", "tat", "utc", "am", "hr", "ki", "pm", "ut", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

@@ -2,12 +2,18 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	teo_Locale    LocaleData
 	teo_KE_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_teo = sync.OnceFunc(func() {
 	teo_Locale = merge(nil, LocaleData{
 		Name:      "teo",
 		DateOrder: "DMY",
@@ -63,6 +69,7 @@ func init() {
 			"uni":            {"wednesday"},
 			"utc":            {"utc"},
 			"am":             {"am"},
+			"hr":             {"hour"},
 			"pm":             {"pm"},
 			" ":              {" "},
 			"'":              {""},
@@ -96,11 +103,11 @@ func init() {
 			"moi":         "in 1 day",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"omodok'king'ol", "nakaebarasa", "osokosokoma", "this minute", "last month", "nakasabiti", "nakaung'on", "next month", "this month", "last week", "last year", "nakaejuma", "next week", "next year", "taparachu", "this hour", "this week", "this year", "isekonde", "nakakany", "odung'el", "idakika", "nakaare", "nakauni", "okwamg'", "aparan", "ebongi", "olabor", "omaruk", "opedel", "otibar", "ewiki", "ojola", "orara", "ekan", "elap", "esaa", "jaan", "lolo", "omuk", "opoo", "aar", "bar", "dun", "gmt", "jol", "jum", "kan", "kwa", "lab", "mar", "mod", "moi", "muk", "now", "ped", "poo", "rar", "sab", "sok", "tib", "ung", "uni", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"omodok'king'ol", "nakaebarasa", "osokosokoma", "this minute", "last month", "nakasabiti", "nakaung'on", "next month", "this month", "last week", "last year", "nakaejuma", "next week", "next year", "taparachu", "this hour", "this week", "this year", "isekonde", "nakakany", "odung'el", "idakika", "nakaare", "nakauni", "okwamg'", "aparan", "ebongi", "olabor", "omaruk", "opedel", "otibar", "ewiki", "ojola", "orara", "ekan", "elap", "esaa", "jaan", "lolo", "omuk", "opoo", "aar", "bar", "dun", "gmt", "jol", "jum", "kan", "kwa", "lab", "mar", "mod", "moi", "muk", "now", "ped", "poo", "rar", "sab", "sok", "tib", "ung", "uni", "utc", "am", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
 
 	teo_KE_Locale = merge(&teo_Locale, LocaleData{
 		Name:      "teo-KE",
 		DateOrder: "DMY",
 	})
-}
+})

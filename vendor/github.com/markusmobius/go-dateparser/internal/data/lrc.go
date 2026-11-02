@@ -2,12 +2,18 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	lrc_Locale    LocaleData
 	lrc_IQ_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_lrc = sync.OnceFunc(func() {
 	lrc_Locale = merge(nil, LocaleData{
 		Name:      "lrc",
 		DateOrder: "YMD",
@@ -41,6 +47,7 @@ func init() {
 			"سال":     {"year"},
 			"ميی":     {"may"},
 			"am":      {"am"},
+			"hr":      {"hour"},
 			"pm":      {"pm"},
 			"ما":      {"month"},
 			" ":       {" "},
@@ -75,11 +82,11 @@ func init() {
 			"شوصو":        "in 1 day",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "سيپتامر", "يوکتوڤر", "جانڤیە", "ديسامر", "فيڤریە", "نوڤامر", "اڤریل", "اگوست", "ثانیە", "ديیقە", "دیروز", "ھافتە", "امرو", "جوان", "جولا", "ساات", "شوصو", "مارس", "fri", "gmt", "mon", "now", "sat", "sun", "thu", "tue", "utc", "wed", "روز", "سال", "ميی", "am", "pm", "ما", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "سيپتامر", "يوکتوڤر", "جانڤیە", "ديسامر", "فيڤریە", "نوڤامر", "اڤریل", "اگوست", "ثانیە", "ديیقە", "دیروز", "ھافتە", "امرو", "جوان", "جولا", "ساات", "شوصو", "مارس", "fri", "gmt", "mon", "now", "sat", "sun", "thu", "tue", "utc", "wed", "روز", "سال", "ميی", "am", "hr", "pm", "ما", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
 
 	lrc_IQ_Locale = merge(&lrc_Locale, LocaleData{
 		Name:      "lrc-IQ",
 		DateOrder: "YMD",
 	})
-}
+})

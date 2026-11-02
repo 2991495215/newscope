@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	mua_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_mua = sync.OnceFunc(func() {
 	mua_Locale = merge(nil, LocaleData{
 		Name:      "mua",
 		DateOrder: "DMY",
@@ -61,6 +67,7 @@ func init() {
 			"mli":                     {"july"},
 			"utc":                     {"utc"},
 			"am":                      {"am"},
+			"hr":                      {"hour"},
 			"pm":                      {"pm"},
 			" ":                       {" "},
 			"'":                       {""},
@@ -94,6 +101,6 @@ func init() {
 			"tǝsoo":       "1 day ago",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"cok comme ma laŋ tǝ biŋ", "cok comme ma laŋne", "mamǝŋgwaafahbii", "zah'nane/ comme", "madǝǝuutǝbijaŋ", "cokcwaklaŋne", "comkaldǝɓlii", "mamǝŋgwaalii", "fii gwahlle", "this minute", "cokcwaklii", "comzyeɓsuu", "comzyiiɗii", "fii dǝɓlii", "fii marfoo", "fii mundaŋ", "last month", "next month", "this month", "cok comme", "com'yakke", "comgaisuu", "comlaaɗii", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "comkolle", "fii yuru", "madǝmbii", "tǝ'nahko", "fii loo", "tǝ'nane", "comme", "lilli", "tǝsoo", "luma", "syii", "cga", "cka", "cki", "cko", "cla", "cya", "cze", "czi", "fde", "fgw", "fii", "flo", "fmf", "fmu", "fyu", "gmt", "mad", "mam", "mbi", "mli", "now", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"cok comme ma laŋ tǝ biŋ", "cok comme ma laŋne", "mamǝŋgwaafahbii", "zah'nane/ comme", "madǝǝuutǝbijaŋ", "cokcwaklaŋne", "comkaldǝɓlii", "mamǝŋgwaalii", "fii gwahlle", "this minute", "cokcwaklii", "comzyeɓsuu", "comzyiiɗii", "fii dǝɓlii", "fii marfoo", "fii mundaŋ", "last month", "next month", "this month", "cok comme", "com'yakke", "comgaisuu", "comlaaɗii", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "comkolle", "fii yuru", "madǝmbii", "tǝ'nahko", "fii loo", "tǝ'nane", "comme", "lilli", "tǝsoo", "luma", "syii", "cga", "cka", "cki", "cko", "cla", "cya", "cze", "czi", "fde", "fgw", "fii", "flo", "fmf", "fmu", "fyu", "gmt", "mad", "mam", "mbi", "mli", "now", "utc", "am", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

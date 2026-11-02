@@ -2,3 +2,5 @@ data-json/
 raw-data/
 .vscode/
 .idea
+.benchmarks/
+__pycache__/

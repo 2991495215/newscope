@@ -2,13 +2,19 @@
 
 package data
 
-import "github.com/markusmobius/go-dateparser/internal/regexp"
+import (
+	"sync"
+
+	"github.com/markusmobius/go-dateparser/internal/regexp"
+)
 
 var (
 	fil_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_fil = sync.OnceFunc(func() {
 	fil_Locale = merge(nil, LocaleData{
 		Name:      "fil",
 		DateOrder: "MDY",
@@ -19,6 +25,7 @@ func init() {
 			"nobyembre":  {"november"},
 			"setyembre":  {"september"},
 			"biyernes":   {"friday"},
+			"mga oras":   {"hour"},
 			"huwebes":    {"thursday"},
 			"oktubre":    {"october"},
 			"pebrero":    {"february"},
@@ -107,8 +114,8 @@ func init() {
 			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) taon ang nakalipas`), "$1 year ago"},
 			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) min ang nakalipas`), "$1 minute ago"},
 			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) seg ang nakalipas`), "$1 second ago"},
-			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) oras nakalipas`), "$1 hour ago"},
-			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) seg nakalipas`), "$1 second ago"},
+			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) oras nakalipas`), "${1} hour ago"},
+			{regexp.MustCompile(`(?i)(\d+[.,]?\d*) seg nakalipas`), "${1} second ago"},
 			{regexp.MustCompile(`(?i)sa (\d+[.,]?\d*) segundo`), "in $1 second"},
 			{regexp.MustCompile(`(?i)sa (\d+[.,]?\d*) linggo`), "in $1 week"},
 			{regexp.MustCompile(`(?i)sa (\d+[.,]?\d*) minuto`), "in $1 minute"},
@@ -119,8 +126,9 @@ func init() {
 			{regexp.MustCompile(`(?i)sa (\d+[.,]?\d*) min`), "in $1 minute"},
 			{regexp.MustCompile(`(?i)sa (\d+[.,]?\d*) seg`), "in $1 second"},
 		},
-		RxCombined:      regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(\d+[.,]?\d* segundo ang nakalipas|\d+[.,]?\d* linggo ang nakalipas|\d+[.,]?\d* minuto ang nakalipas|\d+[.,]?\d* buwan ang nakalipas|\d+[.,]?\d* araw ang nakalipas|\d+[.,]?\d* oras ang nakalipas|\d+[.,]?\d* taon ang nakalipas|\d+[.,]?\d* min ang nakalipas|\d+[.,]?\d* seg ang nakalipas|\d+[.,]?\d* oras nakalipas|\d+[.,]?\d* seg nakalipas|sa \d+[.,]?\d* segundo|sa \d+[.,]?\d* linggo|sa \d+[.,]?\d* minuto|sa \d+[.,]?\d* buwan|sa \d+[.,]?\d* araw|sa \d+[.,]?\d* oras|sa \d+[.,]?\d* taon|sa \d+[.,]?\d* min|sa \d+[.,]?\d* seg)(\z|[^\pL\pM\d]|_)`),
-		RxExactCombined: regexp.MustCompile(`(?i)^(\d+[.,]?\d* segundo ang nakalipas|\d+[.,]?\d* linggo ang nakalipas|\d+[.,]?\d* minuto ang nakalipas|\d+[.,]?\d* buwan ang nakalipas|\d+[.,]?\d* araw ang nakalipas|\d+[.,]?\d* oras ang nakalipas|\d+[.,]?\d* taon ang nakalipas|\d+[.,]?\d* min ang nakalipas|\d+[.,]?\d* seg ang nakalipas|\d+[.,]?\d* oras nakalipas|\d+[.,]?\d* seg nakalipas|sa \d+[.,]?\d* segundo|sa \d+[.,]?\d* linggo|sa \d+[.,]?\d* minuto|sa \d+[.,]?\d* buwan|sa \d+[.,]?\d* araw|sa \d+[.,]?\d* oras|sa \d+[.,]?\d* taon|sa \d+[.,]?\d* min|sa \d+[.,]?\d* seg)$`),
-		KnownWords:      []string{"nakalipas na linggo", "susunod na linggo", "nakaraang linggo", "susunod na buwan", "nakaraang buwan", "sa linggong ito", "sa minutong ito", "susunod na taon", "nakaraang taon", "ngayong linggo", "ngayong buwan", "ngayong araw", "ngayong oras", "ngayong taon", "miyerkules", "disyembre", "nobyembre", "setyembre", "biyernes", "huwebes", "kahapon", "oktubre", "pebrero", "segundo", "agosto", "linggo", "martes", "minuto", "ngayon", "sabado", "abril", "bukas", "buwan", "enero", "hulyo", "hunyo", "lunes", "marso", "araw", "mayo", "oras", "taon", "abr", "ago", "biy", "dis", "ene", "gmt", "hul", "hun", "huw", "lin", "lun", "mar", "may", "min", "miy", "nob", "okt", "peb", "sab", "seg", "set", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		RxCombined:           regexp.MustCompile(`(?i)(\A|[^\pL\pM\d]|_)(\d+[.,]?\d* segundo ang nakalipas|\d+[.,]?\d* linggo ang nakalipas|\d+[.,]?\d* minuto ang nakalipas|\d+[.,]?\d* buwan ang nakalipas|\d+[.,]?\d* araw ang nakalipas|\d+[.,]?\d* oras ang nakalipas|\d+[.,]?\d* taon ang nakalipas|\d+[.,]?\d* min ang nakalipas|\d+[.,]?\d* seg ang nakalipas|\d+[.,]?\d* oras nakalipas|\d+[.,]?\d* seg nakalipas|sa \d+[.,]?\d* segundo|sa \d+[.,]?\d* linggo|sa \d+[.,]?\d* minuto|sa \d+[.,]?\d* buwan|sa \d+[.,]?\d* araw|sa \d+[.,]?\d* oras|sa \d+[.,]?\d* taon|sa \d+[.,]?\d* min|sa \d+[.,]?\d* seg)(\z|[^\pL\pM\d]|_)`),
+		RxExactCombined:      regexp.MustCompile(`(?i)^(\d+[.,]?\d* segundo ang nakalipas|\d+[.,]?\d* linggo ang nakalipas|\d+[.,]?\d* minuto ang nakalipas|\d+[.,]?\d* buwan ang nakalipas|\d+[.,]?\d* araw ang nakalipas|\d+[.,]?\d* oras ang nakalipas|\d+[.,]?\d* taon ang nakalipas|\d+[.,]?\d* min ang nakalipas|\d+[.,]?\d* seg ang nakalipas|\d+[.,]?\d* oras nakalipas|\d+[.,]?\d* seg nakalipas|sa \d+[.,]?\d* segundo|sa \d+[.,]?\d* linggo|sa \d+[.,]?\d* minuto|sa \d+[.,]?\d* buwan|sa \d+[.,]?\d* araw|sa \d+[.,]?\d* oras|sa \d+[.,]?\d* taon|sa \d+[.,]?\d* min|sa \d+[.,]?\d* seg)$`),
+		ExactCombinedMatcher: matchExact53420eac42b22b71574b8901e1dd3a1e32dcc47275efcb5f3a2542dbacedda9a,
+		KnownWords:           []string{"nakalipas na linggo", "susunod na linggo", "nakaraang linggo", "susunod na buwan", "nakaraang buwan", "sa linggong ito", "sa minutong ito", "susunod na taon", "nakaraang taon", "ngayong linggo", "ngayong buwan", "ngayong araw", "ngayong oras", "ngayong taon", "miyerkules", "disyembre", "nobyembre", "setyembre", "biyernes", "mga oras", "huwebes", "kahapon", "oktubre", "pebrero", "segundo", "agosto", "linggo", "martes", "minuto", "ngayon", "sabado", "abril", "bukas", "buwan", "enero", "hulyo", "hunyo", "lunes", "marso", "araw", "mayo", "oras", "taon", "abr", "ago", "biy", "dis", "ene", "gmt", "hul", "hun", "huw", "lin", "lun", "mar", "may", "min", "miy", "nob", "okt", "peb", "sab", "seg", "set", "utc", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

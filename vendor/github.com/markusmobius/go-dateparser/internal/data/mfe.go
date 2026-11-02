@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	mfe_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_mfe = sync.OnceFunc(func() {
 	mfe_Locale = merge(nil, LocaleData{
 		Name:      "mfe",
 		DateOrder: "DMY",
@@ -54,6 +60,7 @@ func init() {
 			"zil":      {"july"},
 			"zin":      {"june"},
 			"am":       {"am"},
+			"hr":       {"hour"},
 			"me":       {"may"},
 			"pm":       {"pm"},
 			"ze":       {"thursday"},
@@ -89,6 +96,6 @@ func init() {
 			"now":         "0 second ago",
 			"yer":         "1 day ago",
 		},
-		KnownWords: []string{"this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "merkredi", "vandredi", "fevriye", "dimans", "segonn", "semenn", "septam", "zanvie", "avril", "demin", "desam", "lindi", "mardi", "minit", "novam", "oktob", "samdi", "zilye", "zordi", "lane", "mars", "zedi", "zour", "avr", "des", "dim", "fev", "gmt", "ler", "lin", "mar", "mer", "mwa", "nov", "now", "okt", "out", "sam", "sep", "utc", "van", "yer", "zan", "zil", "zin", "am", "me", "pm", "ze", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"this minute", "last month", "next month", "this month", "last week", "last year", "next week", "next year", "this hour", "this week", "this year", "merkredi", "vandredi", "fevriye", "dimans", "segonn", "semenn", "septam", "zanvie", "avril", "demin", "desam", "lindi", "mardi", "minit", "novam", "oktob", "samdi", "zilye", "zordi", "lane", "mars", "zedi", "zour", "avr", "des", "dim", "fev", "gmt", "ler", "lin", "mar", "mer", "mwa", "nov", "now", "okt", "out", "sam", "sep", "utc", "van", "yer", "zan", "zil", "zin", "am", "hr", "me", "pm", "ze", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})

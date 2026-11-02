@@ -2,11 +2,17 @@
 
 package data
 
+import (
+	"sync"
+)
+
 var (
 	ki_Locale LocaleData
 )
 
-func init() {
+// Compiling every locale's regexes up front is costly, so each file builds its
+// locales on first use.
+var load_ki = sync.OnceFunc(func() {
 	ki_Locale = merge(nil, LocaleData{
 		Name:      "ki",
 		DateOrder: "DMY",
@@ -61,6 +67,7 @@ func init() {
 			"wtd":                    {"june"},
 			"wtn":                    {"may"},
 			"am":                     {"am"},
+			"hr":                     {"hour"},
 			"pm":                     {"pm"},
 			" ":                      {" "},
 			"'":                      {""},
@@ -94,6 +101,6 @@ func init() {
 			"ira":         "1 day ago",
 			"now":         "0 second ago",
 		},
-		KnownWords: []string{"mwere wa ikumi na umwe", "mwere wa gatandatu", "mwere wa mugwanja", "mwere wa gatano", "mwere wa gatatu", "mwere wa kanana", "mwere wa ikumi", "mwere wa kenda", "mwere wa kana", "mwere wa keri", "this minute", "last month", "next month", "njumamothi", "this month", "last week", "last year", "ndithemba", "next week", "next year", "njumatana", "njumatatu", "this hour", "this week", "this year", "aramithi", "hwai-ini", "muthenya", "njenuari", "njumaine", "ndagika", "sekunde", "kiroko", "kiumia", "njumaa", "umuthi", "ithaa", "mwaka", "mweri", "ruciu", "art", "dit", "gmt", "ira", "jen", "kma", "nma", "nmm", "nmn", "nmt", "now", "ntt", "utc", "wgt", "wik", "wkd", "wkn", "wkr", "wmj", "wmw", "wnn", "wtd", "wtn", "am", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
+		KnownWords: []string{"mwere wa ikumi na umwe", "mwere wa gatandatu", "mwere wa mugwanja", "mwere wa gatano", "mwere wa gatatu", "mwere wa kanana", "mwere wa ikumi", "mwere wa kenda", "mwere wa kana", "mwere wa keri", "this minute", "last month", "next month", "njumamothi", "this month", "last week", "last year", "ndithemba", "next week", "next year", "njumatana", "njumatatu", "this hour", "this week", "this year", "aramithi", "hwai-ini", "muthenya", "njenuari", "njumaine", "ndagika", "sekunde", "kiroko", "kiumia", "njumaa", "umuthi", "ithaa", "mwaka", "mweri", "ruciu", "art", "dit", "gmt", "ira", "jen", "kma", "nma", "nmm", "nmn", "nmt", "now", "ntt", "utc", "wgt", "wik", "wkd", "wkn", "wkr", "wmj", "wmw", "wnn", "wtd", "wtn", "am", "hr", "pm", " ", "'", "+", ",", "-", ".", "/", ":", ";", "@", "[", "]", "z", "|"},
 	})
-}
+})
